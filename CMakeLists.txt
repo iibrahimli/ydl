@@ -20,10 +20,15 @@ add_custom_target(
 
 
 
-# library
+# add OpenCV
+find_package(OpenCV REQUIRED )
+
+
+
+# export ydl library
 
 set(YDL_SOURCES
-        src/load_model.cpp
+        src/ydl.cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${YDL_SOURCES})
@@ -36,6 +41,6 @@ add_library(${PROJECT_NAME} STATIC ${YDL_SOURCES})
 
 add_executable(ydl_test ${PROJECT_SOURCE_DIR}/src/ydl_test.cpp)
 
-target_link_libraries(ydl_test ${DARKNET_LIB})
+target_link_libraries(ydl_test ${DARKNET_LIB} ${OpenCV_LIBS})
 
 add_dependencies(ydl_test libdarknet)
