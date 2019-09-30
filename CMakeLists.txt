@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(ydl)
+project(ydl VERSION 0.1 LANGUAGES C CXX)
 
 
 
@@ -17,6 +17,18 @@ add_custom_target(
     COMMAND make
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/darknet
 )
+
+
+
+# library
+
+set(YDL_SOURCES
+        src/load_model.cpp
+)
+
+add_library(${PROJECT_NAME} STATIC ${YDL_SOURCES})
+
+# add_library(${PROJECT_NAME} SHARED ${YDL_SOURCES})
 
 
 
