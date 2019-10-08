@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(ydl VERSION 0.1 LANGUAGES C CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 
 # add Darknet
@@ -28,8 +31,11 @@ find_package(OpenCV REQUIRED )
 # export ydl library
 
 set(YDL_SOURCES
-        src/ydl.cpp
+        src/detector.cpp
 )
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/include/ydl)
 
 add_library(${PROJECT_NAME} STATIC ${YDL_SOURCES})
 
