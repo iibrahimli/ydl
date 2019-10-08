@@ -2,6 +2,8 @@
 .vscode/
 
 build/
+model/
+
 
 # Prerequisites
 *.d
@@ -20,10 +22,6 @@ build/
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
 
 # Compiled Static libraries
 *.lai
