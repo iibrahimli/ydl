@@ -1,8 +1,14 @@
 #include "detector.hpp"
 
+namespace ydl{
 
 
-ydl::detector::detector(const std::string& cfg_filename, const std::string& weights_filename, const std::string& names_filename = ""){
+
+detector::~detector(){
+}
+
+
+detector::detector(const std::string& cfg_filename, const std::string& weights_filename, const std::string& names_filename){
 
     // load network
     const auto t1 = std::chrono::high_resolution_clock::now();
@@ -44,7 +50,7 @@ ydl::detector::detector(const std::string& cfg_filename, const std::string& weig
 
 
 
-std::tuple<ydl::v_pred_result, ydl::duration> ydl::detector::predict(const std::string& image_filename, float threshold){
+std::tuple<v_pred_result, duration> detector::predict(const std::string& image_filename, float threshold){
 	
 	cv::Mat mat = cv::imread(image_filename);
 
@@ -58,7 +64,7 @@ std::tuple<ydl::v_pred_result, ydl::duration> ydl::detector::predict(const std::
 
 
 
-std::tuple<ydl::v_pred_result, ydl::duration> ydl::detector::predict(cv::Mat mat, float threshold){
+std::tuple<v_pred_result, duration> detector::predict(cv::Mat mat, float threshold){
 
 	v_pred_result result;
 
@@ -81,7 +87,7 @@ std::tuple<ydl::v_pred_result, ydl::duration> ydl::detector::predict(cv::Mat mat
 	const auto t1 = std::chrono::high_resolution_clock::now();
 	network_predict(net, X);
 	const auto t2 = std::chrono::high_resolution_clock::now();
-	ydl::duration duration = t2 - t1;
+	duration duration = t2 - t1;
 
 	int nboxes = 0;
 	auto darknet_results = get_network_boxes(net, mat.cols, mat.rows, threshold, hier_threshold, 0, 1, &nboxes);
@@ -157,31 +163,79 @@ std::tuple<ydl::v_pred_result, ydl::duration> ydl::detector::predict(cv::Mat mat
 
 
 
-std::tuple<ydl::v_pred_result, ydl::duration> ydl::detector::predict(image img, float threshold){
+std::tuple<v_pred_result, duration> detector::predict(image img, float threshold){
+	cv::Mat mat = convert_darknet_image_to_opencv_mat(img);
+
+	return predict(mat, threshold);
+}
+
+
+
+image detector::convert_opencv_mat_to_darknet_image(cv::Mat mat){
+// this function is taken/inspired directly from Darknet:  image_opencv.cpp, mat_to_image()
+
+	// OpenCV uses BGR, but Darknet expects RGB
+	if (mat.channels() == 3){
+		cv::Mat rgb;
+		cv::cvtColor(mat, rgb, cv::COLOR_BGR2RGB);
+		mat = rgb;
+	}
+
+	const int width		= mat.cols;
+	const int height	= mat.rows;
+	const int channels	= mat.channels();
+	const int step		= mat.step;
+	image img			= make_image(width, height, channels);
+	uint8_t * data		= (uint8_t*)mat.data;
+
+	for (int y = 0; y < height; ++y){
+		for (int c = 0; c < channels; ++c){
+			for (int x = 0; x < width; ++x){
+				img.data[c*width*height + y*width + x] = data[y*step + x*channels + c] / 255.0f;
+			}
+		}
+	}
+
+	return img;
+}
+
+
+
+cv::Mat detector::convert_darknet_image_to_opencv_mat(const image img){
+	// this function is taken/inspired directly from Darknet:  image_opencv.cpp, image_to_mat()
+
+	const int channels	= img.c;
+	const int width		= img.w;
+	const int height	= img.h;
+	cv::Mat mat			= cv::Mat(height, width, CV_8UC(channels));
+	const int step		= mat.step;
+
+	for (int y = 0; y < height; ++y){
+		for (int x = 0; x < width; ++x){
+			for (int c = 0; c < channels; ++c){
+				float val = img.data[c*height*width + y*width + x];
+				mat.data[y*step + x*channels + c] = (unsigned char)(val * 255);
+			}
+		}
+	}
+
+	// But now the mat is in RGB instead of the BGR format that OpenCV expects to use.  See show_image_cv()
+	// in Darknet which does the RGB<->BGR conversion, which we'll copy here so the mat is immediately usable.
+	if (channels == 3)
+		cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
+
+	return mat;
+}
+
+
+
+cv::Mat detector::annotate(const cv::Mat& mat, v_pred_result pr){
 
 }
 
 
 
-image ydl::detector::convert_opencv_mat_to_darknet_image(cv::Mat mat){
-
-}
-
-
-
-cv::Mat ydl::detector::convert_darknet_image_to_opencv_mat(const image img){
-
-}
-
-
-
-cv::Mat ydl::detector::annotate(const cv::Mat& mat, ydl::v_pred_result pr){
-
-}
-
-
-
-std::ostream & operator<<(std::ostream & os, const ydl::pred_result & pred){
+std::ostream & operator<<(std::ostream & os, const pred_result & pred){
 	os	<< "\""			<< pred.name << "\""
 		<< " #"			<< pred.best_class
 		<< " prob="		<< pred.best_prob
@@ -207,7 +261,7 @@ std::ostream & operator<<(std::ostream & os, const ydl::pred_result & pred){
 }
 
 
-std::ostream & operator<<(std::ostream & os, const ydl::v_pred_result & results){
+std::ostream & operator<<(std::ostream & os, const v_pred_result & results){
 	const size_t number_of_results = results.size();
 	os << "prediction results: " << number_of_results;
 
@@ -218,3 +272,6 @@ std::ostream & operator<<(std::ostream & os, const ydl::v_pred_result & results)
 
 	return os;
 }
+
+
+}  // namespace ydl
