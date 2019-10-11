@@ -12,6 +12,8 @@
 
 #include <string>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <fstream>
 #include <cmath>
 #include <vector>
@@ -152,8 +154,18 @@ public:
 
     /*!
         Static function to annotate an image using predictions
+        Modifies given image, if you need the original, make a copy before passing.
     */
-    static cv::Mat annotate(const cv::Mat& mat, ydl::v_pred_result pr);
+    static cv::Mat annotate(cv::Mat& mat, v_pred_result pr, duration dur = duration(0));
+
+
+
+    /// Get colours for bboxes
+    static v_col get_default_annotation_colors();
+
+
+    /// Convert duration to string for showing on image
+    static std::string duration_string(duration dur);
 
 
     /*!
@@ -167,8 +179,8 @@ public:
     v_str names;
 
 
-    ///
-    v_col colors;
+    /// Colours used in annotation
+    static v_col annot_colors;
 
 
     /// The time it took to load the network weights 
@@ -195,12 +207,11 @@ public:
 
 
     // annotation parameters
-    cv::HersheyFonts  annotation_font_face;
-	double            annotation_font_scale;
-	int               annotation_font_thickness;
-	bool              annotation_include_duration;
-	bool              annotation_include_timestamp;
-	bool              names_include_percentage;
+    static cv::HersheyFonts  annotation_font_face;
+	static double            annotation_font_scale;
+	static int               annotation_font_thickness;
+	static bool              annotation_include_duration;
+	static bool              names_include_percentage;
 
 };
 
