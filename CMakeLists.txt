@@ -47,6 +47,6 @@ add_library(${PROJECT_NAME} STATIC ${YDL_SOURCES})
 
 add_executable(ydl_test ${PROJECT_SOURCE_DIR}/src/ydl_test.cpp)
 
-target_link_libraries(ydl_test ${DARKNET_LIB} ${OpenCV_LIBS})
+target_link_libraries(ydl_test ${PROJECT_NAME} ${DARKNET_LIB} ${OpenCV_LIBS})
 
-add_dependencies(ydl_test libdarknet)
+add_dependencies(ydl_test libdarknet ${PROJECT_NAME})
