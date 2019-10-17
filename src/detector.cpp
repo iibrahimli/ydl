@@ -27,7 +27,7 @@ detector::detector(const std::string& cfg_filename, const std::string& weights_f
     set_batch_network(net, 1);
 
 	// set properties
-	threshold       = 0.25f;
+	threshold       = 0.5f;
 	hier_threshold  = 0.5f;
 	nms_threshold   = 0.45f;
 
@@ -377,7 +377,7 @@ std::ostream & operator<<(std::ostream & os, const ydl::pred_result & pred){
 
 std::ostream & operator<<(std::ostream & os, const ydl::v_pred_result & results){
 	const size_t number_of_results = results.size();
-	os << "prediction results: " << number_of_results;
+	// os << "prediction results: " << number_of_results;
 
 	for (size_t idx = 0; idx < number_of_results; idx ++){
 		os << std::endl << "-> " << (idx+1) << "/" << number_of_results << ": ";

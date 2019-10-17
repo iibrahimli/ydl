@@ -46,7 +46,7 @@ int main() {
         // predict and annotate
         auto [res, dur] = det.predict(frame, 0.5);
         cout << res << endl;
-        frame = det.annotate(frame, res, dur);
+        det.annotate(frame, res, dur);
 
         imshow("capture", frame);
 
