@@ -24,9 +24,9 @@ add_custom_target(
 
 
 # add OpenCV
-find_package(OpenCV REQUIRED )
+find_package(OpenCV REQUIRED)
 
-include_directories(OpenCV_INCLUDE_DIR)
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 
 # export ydl library
