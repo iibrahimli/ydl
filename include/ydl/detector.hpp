@@ -101,12 +101,59 @@ class ydl::detector {
 
 public:
 
-    /// Destructor
-    virtual ~detector();
+    /*!
+        The Darknet network. This is setup in the constructor.
+        @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
+    */
+    network *net;
+
+
+    /// Names of classes
+    v_str names;
+
+
+    /// Colours used in annotation
+    static v_col annot_colors;
+
+
+    /// The time it took to load the network weights 
+    duration load_duration;
+
+
+    /// Image prediction threshold. Defaults to 0.5.  @see @ref predict()
+    float threshold;
+
+
+    /*!
+        Used during prediction. Defaults to 0.5. @see @ref predict()
+        @todo Need to find more details on how this setting works in Darknet.
+    */
+    float hier_threshold;
+
+
+    /*!
+        Non-Maximal Suppression (NMS) threshold suppresses overlapping bounding boxes and only retains the bounding
+        box that has the maximum probability of object detection associated with it. Defaults to 0.45.
+        @see @ref predict()
+     */
+    float nms_threshold;
+
+
+    // annotation parameters
+    static cv::HersheyFonts  annotation_font_face;
+	static double            annotation_font_scale;
+	static int               annotation_font_thickness;
+	static bool              annotation_include_duration;
+	static bool              names_include_percentage;
+
 
 
     /// Constructor
     detector(const std::string& cfg_filename, const std::string& weights_filename, const std::string& names_filename = "");
+
+
+    /// Destructor
+    virtual ~detector();
 
 
     /*!
@@ -166,52 +213,6 @@ public:
 
     /// Convert duration to string for showing on image
     static std::string duration_string(duration dur);
-
-
-    /*!
-        The Darknet network. This is setup in the constructor.
-        @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
-    */
-    network *net;
-
-
-    /// Names of classes
-    v_str names;
-
-
-    /// Colours used in annotation
-    static v_col annot_colors;
-
-
-    /// The time it took to load the network weights 
-    duration load_duration;
-
-
-    /// Image prediction threshold. Defaults to 0.5.  @see @ref predict()
-    float threshold;
-
-
-    /*!
-        Used during prediction. Defaults to 0.5. @see @ref predict()
-        @todo Need to find more details on how this setting works in Darknet.
-    */
-    float hier_threshold;
-
-
-    /*!
-        Non-Maximal Suppression (NMS) threshold suppresses overlapping bounding boxes and only retains the bounding
-        box that has the maximum probability of object detection associated with it. Defaults to 0.45.
-        @see @ref predict()
-     */
-    float nms_threshold;
-
-
-    // annotation parameters
-    static cv::HersheyFonts  annotation_font_face;
-	static double            annotation_font_scale;
-	static int               annotation_font_thickness;
-	static bool              annotation_include_duration;
-	static bool              names_include_percentage;
 
 };
 
