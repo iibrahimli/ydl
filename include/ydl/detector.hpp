@@ -1,7 +1,7 @@
 /*! @file
 
     The network class that encapsulates a Darknet network
-    A wrapper for the darknet library written by Joseph Redmon
+    A wrapper for the Darknet library written by Joseph Redmon
     (https://github.com/pjreddie/darknet)
 
 */
@@ -21,12 +21,21 @@
 #include <map>
 #include <chrono>
 #include <opencv2/opencv.hpp>
+#include <opencv2/tracking.hpp>
 
 #include "darknet.h"
 
 
 
 namespace ydl{
+
+
+    /// Mode of operation: detection at each frame or detection + tracking
+    enum op_mode {
+        DETECTION,   ///< detection at each frame
+        HYBRID       ///< detect every n-th frame (and when needed) + tracking
+    };
+
     
     /// time interval
     using duration = std::chrono::high_resolution_clock::duration;
@@ -101,6 +110,23 @@ class ydl::detector {
 
 public:
 
+
+    /// Operation mode of the detector (default: HYBRID)
+    op_mode mode;
+
+
+    /// Detect every det_interval frames (default: 10)
+    int det_interval;
+
+
+    /// Tracker status - is there a need for detection again
+    bool tracking_ok;
+
+
+    /// Tracker
+    cv::Tracker *tracker;
+
+
     /*!
         The Darknet network. This is setup in the constructor.
         @note Unfortunately, the Darknet C API does not allow this to be de-allocated!
@@ -149,7 +175,11 @@ public:
 
 
     /// Constructor
-    detector(const std::string& cfg_filename, const std::string& weights_filename, const std::string& names_filename = "");
+    detector(const std::string& cfg_filename,
+             const std::string& weights_filename,
+             const std::string& names_filename     = "",
+             op_mode            mode               = HYBRID,
+             int                detection_interval = 10);
 
 
     /// Destructor

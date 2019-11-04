@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
+
 #include "ydl/detector.hpp"
 
 using std::cout;
@@ -18,19 +19,21 @@ int main() {
     std::string weights_filename = "../model/yolov3_tiny_10k.weights";
     std::string names_filename   = "../model/objects.names";
 
-    ydl::detector det(cfg_filename, weights_filename, names_filename);
+    ydl::detector det(cfg_filename, weights_filename, names_filename, ydl::HYBRID, 10);
 
+    // open the default camera
+    VideoCapture cap(0);
+    // VideoCapture cap("../test/drones.mp4");
 
-    VideoCapture cap(0);     // open the default camera
-    if(!cap.isOpened()){     // check if we succeeded
+    if(!cap.isOpened()){
         cout << "Unable to open camera" << endl;
         return -1;
     }
 
     cout << "Camera OK" << std::endl;
 
-    cap.set(CV_CAP_PROP_FRAME_WIDTH,  CAP_WIDTH);
-    cap.set(CV_CAP_PROP_FRAME_HEIGHT, CAP_HEIGHT);
+    cap.set(CAP_PROP_FRAME_WIDTH,  CAP_WIDTH);
+    cap.set(CAP_PROP_FRAME_HEIGHT, CAP_HEIGHT);
 
     namedWindow("capture");
 

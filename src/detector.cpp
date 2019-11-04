@@ -8,7 +8,15 @@ detector::~detector(){
 }
 
 
-detector::detector(const std::string& cfg_filename, const std::string& weights_filename, const std::string& names_filename){
+detector::detector(const std::string& cfg_filename,
+                   const std::string& weights_filename,
+                   const std::string& names_filename,
+                   op_mode            mode,
+                   int                detection_interval)
+	:	mode         {mode},
+		det_interval {detection_interval},
+		tracking_ok  {false}
+{
 
     // load network
     const auto t1 = std::chrono::high_resolution_clock::now();
@@ -18,8 +26,7 @@ detector::detector(const std::string& cfg_filename, const std::string& weights_f
 
 	std::cout << "loaded weights in " << std::chrono::duration_cast<std::chrono::milliseconds>(load_duration).count() << " ms" << std::endl;
 
-    if (net == nullptr)
-	{
+    if (net == nullptr){
 		/// @throw std::runtime_error if the call to darknet's load_network() has failed.
 		throw std::runtime_error("darknet failed to load the configuration, the weights, or both");
 	}
@@ -272,8 +279,8 @@ cv::Mat detector::annotate(cv::Mat& mat, v_pred_result pr, duration dur){
 		const cv::Size text_size = cv::getTextSize(pred.name, annotation_font_face, annotation_font_scale, annotation_font_thickness, nullptr);
 
 		cv::Rect r(cv::Point(pred.rect.x - 1, pred.rect.y - text_size.height - 2), cv::Size(text_size.width + 2, text_size.height + 2));
-		cv::rectangle(annotated_mat, r, color, CV_FILLED);
-		cv::putText(annotated_mat, pred.name, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::rectangle(annotated_mat, r, color, cv::FILLED);
+		cv::putText(annotated_mat, pred.name, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, cv::LINE_AA);
 	}
 
 	if (annotation_include_duration){
@@ -292,8 +299,8 @@ cv::Mat detector::annotate(cv::Mat& mat, v_pred_result pr, duration dur){
 
 		// draw label and confidence
 		cv::Rect r(cv::Point(2, 2), cv::Size(text_size.width + 2, text_size.height + 2));
-		cv::rectangle(annotated_mat, r, cv::Scalar(255,255,255), CV_FILLED);
-		cv::putText(annotated_mat, str, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, CV_AA);
+		cv::rectangle(annotated_mat, r, cv::Scalar(255,255,255), cv::FILLED);
+		cv::putText(annotated_mat, str, cv::Point(r.x + 1, r.y + text_size.height), annotation_font_face, annotation_font_scale, cv::Scalar(0,0,0), annotation_font_thickness, cv::LINE_AA);
 	}
 
 	return annotated_mat;
