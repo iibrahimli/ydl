@@ -61,7 +61,7 @@ namespace ydl{
     struct pred_result {
 
         /// Opencv rectangle which describes where the object is located on the image
-        cv::Rect rect;
+        cv::Rect2d rect;
 
         /// Normalized x coordinate of the center of the bbox (use rect.x instead)
         float mid_x;
@@ -115,16 +115,32 @@ public:
     op_mode mode;
 
 
+    /// Tracker
+    cv::Ptr<cv::Tracker> tracker;
+
+
     /// Detect every det_interval frames (default: 10)
     int det_interval;
+
+
+    /// Current frame counter
+    int frame_counter;
 
 
     /// Tracker status - is there a need for detection again
     bool tracking_ok;
 
 
-    /// Tracker
-    cv::Tracker *tracker;
+    /// Tracker initialized
+    bool tracking_init;
+
+
+    /// Last known rectangle
+    cv::Rect2d obj_rect;
+
+
+    /// Last known result
+    v_pred_result obj_pred_result;
 
 
     /*!
@@ -179,7 +195,7 @@ public:
              const std::string& weights_filename,
              const std::string& names_filename     = "",
              op_mode            mode               = HYBRID,
-             int                detection_interval = 10);
+             int                detection_interval = 20);
 
 
     /// Destructor

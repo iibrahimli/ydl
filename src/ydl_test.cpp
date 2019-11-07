@@ -11,6 +11,15 @@ using namespace cv;
 #define CAP_WIDTH  1280
 #define CAP_HEIGHT 720
 
+/*
+    ############################################
+    ############################################
+    ####                                    ####
+    ####  TODO: implement cv::MultiTracker  ####
+    ####                                    ####
+    ############################################
+    ############################################
+*/
 
 
 int main() {
@@ -22,8 +31,8 @@ int main() {
     ydl::detector det(cfg_filename, weights_filename, names_filename, ydl::HYBRID, 10);
 
     // open the default camera
-    VideoCapture cap(0);
-    // VideoCapture cap("../test/drones.mp4");
+    // VideoCapture cap(0);
+    VideoCapture cap("../test/drones.mp4");
 
     if(!cap.isOpened()){
         cout << "Unable to open camera" << endl;
@@ -37,14 +46,13 @@ int main() {
 
     namedWindow("capture");
 
-    // ydl::v_pred_result res;
-    // ydl::duration dur;
+    for(;;){
 
-    for(;;) {
         Mat frame;
         cap >> frame;
 
-        if(frame.empty()) continue;
+        if(frame.empty())
+            continue;
 
         // predict and annotate
         auto [res, dur] = det.predict(frame, 0.5);
@@ -54,7 +62,8 @@ int main() {
 
         imshow("capture", frame);
 
-        if(waitKey(1) != 255) break;
+        if(waitKey(1) != -1)
+            break;
     }
 
     cap.release();

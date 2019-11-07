@@ -13,9 +13,11 @@ detector::detector(const std::string& cfg_filename,
                    const std::string& names_filename,
                    op_mode            mode,
                    int                detection_interval)
-	:	mode         {mode},
-		det_interval {detection_interval},
-		tracking_ok  {false}
+	:	mode          {mode},
+		det_interval  {detection_interval},
+		tracking_ok   {false},
+		tracking_init {false},
+		frame_counter {0}
 {
 
     // load network
@@ -49,6 +51,9 @@ detector::detector(const std::string& cfg_filename,
 		}
 	}
 
+
+	tracker = cv::TrackerKCF::create();
+
 }
 
 
@@ -79,6 +84,30 @@ std::tuple<v_pred_result, duration> detector::predict(const std::string& image_f
 std::tuple<v_pred_result, duration> detector::predict(cv::Mat mat, float threshold){
 
 	v_pred_result result;
+	duration duration;
+
+
+	if(tracking_ok && frame_counter % det_interval != 0){
+
+		auto t1 = std::chrono::high_resolution_clock::now();
+		tracking_ok = tracker->update(mat, obj_rect);
+		auto t2 = std::chrono::high_resolution_clock::now();
+		duration = t2 - t1;
+
+		std::cerr << "DEBUG [frame " << frame_counter << "]: tracking ok: " << tracking_ok << ", obj_rect: " << obj_rect << std::endl;
+
+		if(tracking_ok){
+			result = obj_pred_result;
+			result[0].rect = obj_rect;
+			frame_counter++;
+			return {result, duration};
+		}
+	}
+
+	// proceed to detection if tracking fails or object could not be located by the tracker
+
+
+	// detect
 
 	if (net == nullptr){
 		/// @throw std::logic_error if the network is invalid.
@@ -87,19 +116,19 @@ std::tuple<v_pred_result, duration> detector::predict(cv::Mat mat, float thresho
 
 	// user has probably specified percentages, so bring it back down to a range between 0.0 and 1.0
 	if (threshold > 1.0) threshold /= 100.0;
-	if (threshold < 0.0) threshold  = 0.1;
-	if (threshold > 1.0) threshold  = 1.0;
-	
+	if (threshold < 0.0) threshold = 0.1;
+	if (threshold > 1.0) threshold = 1.0;
+
 	cv::Mat resized_image;
 	cv::resize(mat, resized_image, cv::Size(net->w, net->h));
 	image img = convert_opencv_mat_to_darknet_image(resized_image);
 
 	float * X = img.data;
 
-	const auto t1 = std::chrono::high_resolution_clock::now();
+	auto t1 = std::chrono::high_resolution_clock::now();
 	network_predict(net, X);
-	const auto t2 = std::chrono::high_resolution_clock::now();
-	duration duration = t2 - t1;
+	auto t2 = std::chrono::high_resolution_clock::now();
+	duration = t2 - t1;
 
 	int nboxes = 0;
 	auto darknet_results = get_network_boxes(net, 1, 1, threshold, hier_threshold, 0, 1, &nboxes);
@@ -182,6 +211,27 @@ std::tuple<v_pred_result, duration> detector::predict(cv::Mat mat, float thresho
 	free_detections(darknet_results, nboxes);
 	free_image(img);
 
+	// update last known rectangle
+	if(result.size()){
+		std::cerr << "DEBUG [frame " << frame_counter << "]: detected rect:" << result[0].rect << std::endl;
+		obj_rect = result[0].rect;
+		
+		// set up the tracker if its not set up yet
+		if(!tracking_init){
+			tracking_init = tracker->init(mat, obj_rect);
+			if(tracking_init){
+				std::cerr << "DEBUG [frame " << frame_counter << "]: tracker initialized" << std::endl;
+			}
+			else
+				std::cerr << "DEBUG [frame " << frame_counter << "]: tracker failed to initialize" << std::endl;
+		}
+	}
+
+	frame_counter++;
+
+	// try tracking
+	tracking_ok = true;
+
 	return {result, duration};
 }
 
@@ -254,6 +304,7 @@ cv::Mat detector::convert_darknet_image_to_opencv_mat(const image img){
 
 
 cv::Mat detector::annotate(cv::Mat& mat, v_pred_result pr, duration dur){
+
 	if (mat.empty()){
 		/// @throw std::logic_error if an attempt is made to annotate an empty image
 		throw std::logic_error("cannot annotate an empty image");
